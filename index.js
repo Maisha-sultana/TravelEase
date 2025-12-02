@@ -28,6 +28,29 @@ async function run() {
   try {
     
     await client.connect();
+   
+     const db = client.db('travel_db');
+    const productsCollection = db.collection('products');
+
+      app.post('/products', async (req, res) => {
+            const newProduct = req.body;
+            const result = await productsCollection.insertOne(newProduct);
+            res.send(result);
+        })
+
+        app.get('/products', async (req, res) => {
+            try {
+            
+                const cursor = productsCollection.find({});
+                const result = await cursor.toArray();
+                res.send(result); 
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                res.status(500).send({ message: 'Failed to fetch products' });
+            }
+        })
+
+
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
