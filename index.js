@@ -56,7 +56,6 @@ async function run() {
             }
         })
 
-        // Existing /products route (optional, you can keep or remove this)
         app.get('/products', async (req, res) => {
             try {
             
