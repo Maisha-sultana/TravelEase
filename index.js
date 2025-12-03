@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb'); // ObjectId আমদানি করা হয়েছে
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb'); 
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -31,7 +31,7 @@ async function run() {
    
     const db = client.db('travel_db');
     const productsCollection = db.collection('products');
-    const bookingsCollection = db.collection('bookings'); // নতুন কালেকশন
+    const bookingsCollection = db.collection('bookings'); 
 
       app.post('/products', async (req, res) => {
             const newProduct = req.body;
@@ -55,11 +55,10 @@ async function run() {
             }
         })
         
-        // --- New API: Get Single Vehicle Details by ID ---
+  
         app.get('/products/:id', async (req, res) => {
             try {
                 const id = req.params.id;
-                // ObjectId ব্যবহার করে ID কনভার্ট করা
                 const query = { _id: new ObjectId(id) }; 
                 const product = await productsCollection.findOne(query);
                 
@@ -73,7 +72,7 @@ async function run() {
                 res.status(500).send({ message: 'Invalid vehicle ID format or server error' });
             }
         });
-        // --------------------------------------------------
+    
 
         app.get('/products', async (req, res) => {
             try {
@@ -87,7 +86,7 @@ async function run() {
             }
         })
         
-        // --- New API: Post Booking Request ---
+       
         app.post('/bookings', async (req, res) => {
             const newBooking = req.body;
             try {
@@ -98,7 +97,7 @@ async function run() {
                 res.status(500).send({ message: 'Failed to save booking request' });
             }
         });
-        // ------------------------------------
+   
 
 
     await client.db("admin").command({ ping: 1 });
