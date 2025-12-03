@@ -28,6 +28,7 @@ async function run() {
   try {
     
     await client.connect();
+    console.log("MongoDB client connected."); // Log successful connection
    
     const db = client.db('travel_db');
     const productsCollection = db.collection('products');
@@ -35,8 +36,26 @@ async function run() {
 
       app.post('/products', async (req, res) => {
             const newProduct = req.body;
-            const result = await productsCollection.insertOne(newProduct);
-            res.send(result);
+            try {
+                const result = await productsCollection.insertOne(newProduct);
+                
+                // --- CRITICAL DEBUGGING LOG ---
+                if (result && result.insertedId) {
+                    console.log(`✅ SUCCESSFULLY INSERTED: ID ${result.insertedId}. Check MongoDB dashboard now.`);
+                    res.send(result);
+                } else {
+                    // Insert operation did not return expected insertedId field
+                    console.error('❌ MONGODB RESPONSE ERROR: Insert operation returned without insertedId.');
+                    res.status(500).send({ message: 'Insert operation failed internally.' });
+                }
+                // ------------------------------
+                
+            } catch (error) {
+                // সার্ভার কনসোলে ত্রুটি লগ করুন
+                console.error('❌ FATAL MONGODB INSERT FAILURE for /products:', error.message);
+                // ফ্রন্টএন্ডে এরর মেসেজ পাঠান
+                res.status(500).send({ message: 'Failed to insert document into MongoDB.', error: error.message });
+            }
         })
 
         app.get('/latest-vehicles', async (req, res) => {
@@ -44,8 +63,8 @@ async function run() {
               
                 const cursor = productsCollection
                     .find({})
-                    .sort({ _id: -1 }) // Sort by _id (which includes creation time) descending
-                    .limit(6);         // Limit to the last 6 documents
+                    .sort({ _id: -1 }) 
+                    .limit(6);         
                 
                 const result = await cursor.toArray();
                 res.send(result); 
