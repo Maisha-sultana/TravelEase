@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb'); // <-- ObjectId অবশ্যই এখানে থাকতে হবে
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb'); 
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -34,7 +34,7 @@ async function run() {
     const productsCollection = db.collection('products');
     const bookingsCollection = db.collection('bookings'); 
 
-      // ✅ POST /products
+      // POST /products: New Vehicle Addition
       app.post('/products', async (req, res) => {
             const newProduct = req.body;
             try {
@@ -55,7 +55,7 @@ async function run() {
             }
         })
 
-        // ✅ GET /latest-vehicles
+        // GET /latest-vehicles
         app.get('/latest-vehicles', async (req, res) => {
             try {
               
@@ -73,7 +73,7 @@ async function run() {
         })
         
   
-        // ✅ GET /products/:id
+        // GET /products/:id
         app.get('/products/:id', async (req, res) => {
             try {
                 const id = req.params.id;
@@ -92,7 +92,7 @@ async function run() {
         });
     
 
-        // ✅ GET /products
+        // GET /products
         app.get('/products', async (req, res) => {
             try {
             
@@ -105,11 +105,14 @@ async function run() {
             }
         })
 
-        // ✅ GET /my-products/:email (My Vehicles Routs)
-        app.get('/my-products/:email', async (req, res) => {
+        // GET /my-products/:email (My Vehicles)
+       app.get('/my-products/:email', async (req, res) => {
             try {
+                // --- CRITICAL FIX ---
                 const email = req.params.email;
-                const query = { userEmail: email }; // <--- সঠিক ফিল্টারিং
+                const query = { userEmail: email }; // <-- এই দুটি লাইন অপরিহার্য
+                // --------------------
+                
                 const cursor = productsCollection.find(query);
                 const result = await cursor.toArray();
                 res.send(result);
@@ -118,8 +121,24 @@ async function run() {
                 res.status(500).send({ message: 'Failed to fetch owner products' });
             }
         });
+
+        // ✅ GET /my-bookings/:email (My Bookings Route - FIXED)
+        app.get('/my-bookings/:email', async (req, res) => {
+            try {
+                // --- CRITICAL FIX ---
+                const email = req.params.email;
+                const query = { renterEmail: email }; // <-- এই দুটি লাইন অপরিহার্য
+                // --------------------
+                const cursor = bookingsCollection.find(query).sort({ bookingDate: -1 });
+                const result = await cursor.toArray();
+                res.send(result);
+            } catch (error) {
+                console.error('Error fetching bookings by renter email:', error);
+                res.status(500).send({ message: 'Failed to fetch user bookings' });
+            }
+        });
         
-        // ✅ DELETE /products/:id
+        // DELETE /products/:id
         app.delete('/products/:id', async (req, res) => {
             try {
                 const id = req.params.id;
@@ -142,7 +161,7 @@ async function run() {
             }
         });
 
-        // ✅ PUT /products/:id
+        // PUT /products/:id
         app.put('/products/:id', async (req, res) => {
             try {
                 const id = req.params.id;
@@ -172,6 +191,7 @@ async function run() {
         });
         
        
+        // POST /bookings
         app.post('/bookings', async (req, res) => {
             const newBooking = req.body;
             try {
