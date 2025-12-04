@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb'); 
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb'); // <-- ObjectId অবশ্যই এখানে থাকতে হবে
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -19,7 +19,7 @@ const client = new MongoClient(uri, {
   }
 });
 
-app.get('/', (req, res) =>{
+app.get('/', (req, res) => {
    res.send('travel is running')
 })
       
@@ -34,30 +34,28 @@ async function run() {
     const productsCollection = db.collection('products');
     const bookingsCollection = db.collection('bookings'); 
 
+      // ✅ POST /products
       app.post('/products', async (req, res) => {
             const newProduct = req.body;
             try {
                 const result = await productsCollection.insertOne(newProduct);
                 
-                // --- CRITICAL DEBUGGING LOG ---
                 if (result && result.insertedId) {
                     console.log(`✅ SUCCESSFULLY INSERTED: ID ${result.insertedId}. Check MongoDB dashboard now.`);
                     res.send(result);
                 } else {
-                    // Insert operation did not return expected insertedId field
                     console.error('❌ MONGODB RESPONSE ERROR: Insert operation returned without insertedId.');
                     res.status(500).send({ message: 'Insert operation failed internally.' });
                 }
-                // ------------------------------
                 
             } catch (error) {
                 
                 console.error('❌ FATAL MONGODB INSERT FAILURE for /products:', error.message);
-                // ফ্রন্টএন্ডে এরর মেসেজ পাঠান
                 res.status(500).send({ message: 'Failed to insert document into MongoDB.', error: error.message });
             }
         })
 
+        // ✅ GET /latest-vehicles
         app.get('/latest-vehicles', async (req, res) => {
             try {
               
@@ -75,6 +73,7 @@ async function run() {
         })
         
   
+        // ✅ GET /products/:id
         app.get('/products/:id', async (req, res) => {
             try {
                 const id = req.params.id;
@@ -93,6 +92,7 @@ async function run() {
         });
     
 
+        // ✅ GET /products
         app.get('/products', async (req, res) => {
             try {
             
@@ -104,6 +104,72 @@ async function run() {
                 res.status(500).send({ message: 'Failed to fetch products' });
             }
         })
+
+        // ✅ GET /my-products/:email (My Vehicles Routs)
+        app.get('/my-products/:email', async (req, res) => {
+            try {
+                const email = req.params.email;
+                const query = { userEmail: email }; // <--- সঠিক ফিল্টারিং
+                const cursor = productsCollection.find(query);
+                const result = await cursor.toArray();
+                res.send(result);
+            } catch (error) {
+                console.error('Error fetching products by owner email:', error);
+                res.status(500).send({ message: 'Failed to fetch owner products' });
+            }
+        });
+        
+        // ✅ DELETE /products/:id
+        app.delete('/products/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const query = { _id: new ObjectId(id) };
+                const result = await productsCollection.deleteOne(query);
+
+                if (result.deletedCount === 1) {
+                    console.log(`✅ SUCCESSFULLY DELETED: ID ${id}`);
+                    res.send({ acknowledged: true, deletedCount: 1 });
+                } else {
+                    res.status(404).send({ message: 'Vehicle not found or already deleted' });
+                }
+            } catch (error) {
+                console.error('Error deleting vehicle:', error);
+                if (error.name === 'BSONTypeError') {
+                     res.status(400).send({ message: 'Invalid vehicle ID format' });
+                } else {
+                     res.status(500).send({ message: 'Failed to delete vehicle' });
+                }
+            }
+        });
+
+        // ✅ PUT /products/:id
+        app.put('/products/:id', async (req, res) => {
+            try {
+                const id = req.params.id;
+                const updatedProduct = req.body;
+                // Remove _id from the body to prevent mutation error
+                delete updatedProduct._id; 
+
+                const filter = { _id: new ObjectId(id) };
+                // Use $set to update fields
+                const updateDoc = { $set: updatedProduct };
+
+                const result = await productsCollection.updateOne(filter, updateDoc, { upsert: false });
+
+                if (result.matchedCount === 0) {
+                    res.status(404).send({ message: 'Vehicle not found' });
+                } else {
+                    res.send({ acknowledged: true, modifiedCount: result.modifiedCount });
+                }
+            } catch (error) {
+                console.error('Error updating vehicle:', error);
+                if (error.name === 'BSONTypeError') {
+                    res.status(400).send({ message: 'Invalid vehicle ID format' });
+                } else {
+                    res.status(500).send({ message: 'Failed to update vehicle' });
+                }
+            }
+        });
         
        
         app.post('/bookings', async (req, res) => {
