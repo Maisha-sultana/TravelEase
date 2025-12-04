@@ -28,7 +28,7 @@ async function run() {
   try {
     
     await client.connect();
-    console.log("MongoDB client connected."); // Log successful connection
+    console.log("MongoDB client connected."); 
    
     const db = client.db('travel_db');
     const productsCollection = db.collection('products');
@@ -51,7 +51,7 @@ async function run() {
                 // ------------------------------
                 
             } catch (error) {
-                // সার্ভার কনসোলে ত্রুটি লগ করুন
+                
                 console.error('❌ FATAL MONGODB INSERT FAILURE for /products:', error.message);
                 // ফ্রন্টএন্ডে এরর মেসেজ পাঠান
                 res.status(500).send({ message: 'Failed to insert document into MongoDB.', error: error.message });
