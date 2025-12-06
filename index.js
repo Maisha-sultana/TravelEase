@@ -108,10 +108,9 @@ async function run() {
         // GET /my-products/:email (My Vehicles)
        app.get('/my-products/:email', async (req, res) => {
             try {
-                // --- CRITICAL FIX ---
+            
                 const email = req.params.email;
-                const query = { userEmail: email }; // <-- এই দুটি লাইন অপরিহার্য
-                // --------------------
+                const query = { userEmail: email };
                 
                 const cursor = productsCollection.find(query);
                 const result = await cursor.toArray();
@@ -122,13 +121,12 @@ async function run() {
             }
         });
 
-        // ✅ GET /my-bookings/:email (My Bookings Route - FIXED)
         app.get('/my-bookings/:email', async (req, res) => {
             try {
-                // --- CRITICAL FIX ---
+                
                 const email = req.params.email;
-                const query = { renterEmail: email }; // <-- এই দুটি লাইন অপরিহার্য
-                // --------------------
+                const query = { renterEmail: email }; 
+          
                 const cursor = bookingsCollection.find(query).sort({ bookingDate: -1 });
                 const result = await cursor.toArray();
                 res.send(result);
@@ -166,11 +164,11 @@ async function run() {
             try {
                 const id = req.params.id;
                 const updatedProduct = req.body;
-                // Remove _id from the body to prevent mutation error
+             
                 delete updatedProduct._id; 
 
                 const filter = { _id: new ObjectId(id) };
-                // Use $set to update fields
+                
                 const updateDoc = { $set: updatedProduct };
 
                 const result = await productsCollection.updateOne(filter, updateDoc, { upsert: false });
